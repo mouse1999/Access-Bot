@@ -1,0 +1,92 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Courier
+skinparam componentStyle rectangle
+skinparam nodesep 50
+skinparam ranksep 60
+
+title Permutation Betting System - High-Level Architecture
+
+' ───────────────────────────────────────────────
+' Actors / Triggers
+' ───────────────────────────────────────────────
+
+[User / Admin] #..# [Web UI / CLI / Cron]
+
+' ───────────────────────────────────────────────
+' Main Flow
+' ───────────────────────────────────────────────
+
+package "Frontend / Trigger" {
+  [Web UI / CLI / Cron] --> [GameScraperController]
+}
+
+package "API Layer" {
+  [GameScraperController] --> [GameScraperService]
+}
+
+package "Scraping & Ingestion" {
+  [GameScraperService] -right-> [Playwright\n(read-only)]
+  [GameScraperService] --> [GameService]
+}
+
+[GameService] --> [H2 Database] : save games
+[GameService] --> [Application Events] : GamesScrapedEvent
+
+package "Core Business Logic" {
+  [Application Events] --> [SelectionService]
+  [SelectionService] --> [PermutationOrchestrator]
+
+  [PermutationOrchestrator] --> [H2 Database] : create\nPermutationSet + 32× PermGame
+}
+
+package "Bet Execution & Reliability" {
+  [BetProcessingScheduler\n(@Scheduled)] --> [BetExecutionService]
+  [BetExecutionService] -right-> [Playwright\n(write mode)]
+  [BetExecutionService] --> [H2 Database] : update status & betReference
+}
+
+' ───────────────────────────────────────────────
+' External System
+' ───────────────────────────────────────────────
+
+cloud "Betting Site" as BettingSite
+
+[Playwright\n(read-only)] <--> BettingSite : scrape odds & fixtures
+[Playwright\n(write mode)] <--> BettingSite : place bets
+
+' ───────────────────────────────────────────────
+' Persistence
+' ───────────────────────────────────────────────
+
+database "H2 Database" {
+  [Game]
+  [GameSelection\n+ 5 items]
+  [PermutationSet\n(status machine)]
+  [PermGame\n(32 rows)]
+}
+
+' ───────────────────────────────────────────────
+' Relationships & Data Flow Summary
+' ───────────────────────────────────────────────
+
+GameScraperController .down.> GameScraperService   : triggers
+GameScraperService   ..> GameService               : persists & publishes event
+SelectionService     ..> PermutationOrchestrator    : business rules → combinatorics
+PermutationOrchestrator ..> H2 : atomic save (1 + 32 rows)
+BetProcessingScheduler ..> BetExecutionService     : retry loop (every 5 min)
+BetExecutionService  ..> H2 : PENDING → PROCESSING → COMPLETED/FAILED
+
+note bottom of [BetProcessingScheduler]
+  Reliable retry mechanism
+  Prevents lost bets on temporary failures
+end note
+
+note right of [PermutationOrchestrator]
+  Generates balanced 32-row matrix
+  (16 A / 16 B per position)
+  Single transaction
+end note
+
+@enduml

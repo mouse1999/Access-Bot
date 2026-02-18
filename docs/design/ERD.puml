@@ -1,0 +1,79 @@
+@startuml
+
+' ================================
+' ENUMS
+' ================================
+
+enum BetStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum MarketType {
+  OVER_UNDER_1_5
+}
+
+enum OutcomeType {
+  A_OVER_1_5
+  B_UNDER_1_5
+}
+
+' ================================
+' ENTITIES
+' ================================
+
+entity Game {
+  +id : Long <<PK>>
+  --
+  homeTeam : String
+  awayTeam : String
+  startTime : LocalDateTime
+}
+
+entity GameSelection {
+  +id : Long <<PK>>
+  --
+  createdAt : LocalDateTime
+}
+
+entity GameSelectionItem {
+  +id : Long <<PK>>
+  --
+  selection_id : Long <<FK>>
+  game_id : Long <<FK>>
+}
+
+entity PermutationSet {
+  +id : Long <<PK>>
+  --
+  selection_id : Long <<FK>>
+  status : BetStatus
+  betReference : String
+  createdAt : LocalDateTime
+}
+
+entity PermGame {
+  +id : Long <<PK>>
+  --
+  permutation_id : Long <<FK>>
+  game_id : Long <<FK>>
+  market : MarketType
+  outcome : OutcomeType
+  positionIndex : Integer
+}
+
+' ================================
+' RELATIONSHIPS
+' ================================
+
+Game ||--o{ GameSelectionItem : selected_in
+GameSelection ||--o{ GameSelectionItem : contains
+
+GameSelection ||--o{ PermutationSet : generates
+
+PermutationSet ||--o{ PermGame : consists_of
+Game ||--o{ PermGame : used_in
+
+@enduml

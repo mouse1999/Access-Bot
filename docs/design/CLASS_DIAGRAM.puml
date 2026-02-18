@@ -1,0 +1,172 @@
+@startuml
+title Permutation Betting System - Event-Driven Comprehensive Class Diagram
+
+' ================================
+' ENUMS
+' ================================
+enum BetStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum MarketType {
+  OVER_UNDER_1_5
+}
+
+enum OutcomeType {
+  A_OVER_1_5
+  B_UNDER_1_5
+}
+
+' ================================
+' EVENTS (The Bridge)
+' ================================
+class GamesScrapedEvent {
+  - games : List<Game>
+  + getGames() : List<Game>
+}
+
+' ================================
+' DOMAIN ENTITIES
+' ================================
+class Game {
+  - id : Long
+  - homeTeam : String
+  - awayTeam : String
+  - startTime : LocalDateTime
+  --
+  + isStarted() : boolean
+}
+
+class GameSelection {
+  - id : Long
+  - createdAt : LocalDateTime
+  - items : List<GameSelectionItem>
+  --
+  + addGame(game: Game)
+  + getSelectedGames() : List<Game>
+}
+
+class GameSelectionItem {
+  - id : Long
+  - selection : GameSelection
+  - game : Game
+}
+
+class PermutationSet {
+  - id : Long
+  - selection : GameSelection
+  - status : BetStatus
+  - betReference : String
+  - createdAt : LocalDateTime
+  - permGames : List<PermGame>
+  --
+  + markProcessing()
+  + markCompleted(ref: String)
+  + markFailed()
+}
+
+class PermGame {
+  - id : Long
+  - permutationSet : PermutationSet
+  - game : Game
+  - market : MarketType
+  - outcome : OutcomeType
+
+  --
+  + isValid() : boolean
+}
+
+' ================================
+' SERVICES
+' ================================
+
+class GameScraperService {
+  + runScraper() : void
+}
+
+class GameService {
+  - publisher : ApplicationEventPublisher
+  + saveScrapedGames(games: List<Game>) : void
+  + getGameById(id: Long) : Game
+  + getAvailableGames() : List<Game>
+}
+
+class SelectionService {
+  + onGamesScraped(event: GamesScrapedEvent) : void <<EventListener>>
+  + createSelection(gameIds: List<Long>) : GameSelection
+  + validateSelection(selection: GameSelection)
+}
+
+class PermutationOrchestrator {
+  + generatePermutations(selection: GameSelection, market: MarketType) : List<List<OutcomeType>>
+  - generateBinaryMatrix(size: int) : List<String>
+}
+
+class PermGameService {
+  + createPermGames(set: PermutationSet, permutations: List<List<OutcomeType>>)
+}
+
+class BetProcessingService {
+  + createPermutationSet(selectionId: Long, market: MarketType) : PermutationSet
+  + processPermutation(setId: Long)
+  + submitToProvider(set: PermutationSet) : String
+}
+
+class ValidationService {
+  + validateMarketForGames(games: List<Game>, market: MarketType)
+  + validatePermutationCount(permutations: List<List<OutcomeType>>, expected: int)
+}
+
+' ================================
+' REPOSITORIES
+' ================================
+interface GameRepository {
+  + findById(id: Long) : Game
+  + findAll() : List<Game>
+}
+
+interface GameSelectionRepository {
+  + save(selection: GameSelection) : GameSelection
+  + findById(id: Long) : GameSelection
+}
+
+interface PermutationSetRepository {
+  + save(set: PermutationSet) : PermutationSet
+  + findById(id: Long) : PermutationSet
+}
+
+interface PermGameRepository {
+  + saveAll(permGames: List<PermGame>)
+}
+
+' ================================
+' RELATIONSHIPS
+' ================================
+
+' Domain Relations
+Game "1" -- "0..*" GameSelectionItem
+GameSelection "1" -- "1..*" GameSelectionItem
+GameSelection "1" -- "0..*" PermutationSet
+PermutationSet "1" -- "32" PermGame
+Game "1" -- "0..*" PermGame
+
+' Service & Event Flow
+GameScraperService --> GameService : "Provides Scraped List"
+GameService ..> GamesScrapedEvent : "Dispatches after save"
+GamesScrapedEvent ..> SelectionService : "Triggers auto-logic"
+
+SelectionService --> GameService
+SelectionService --> GameSelectionRepository
+
+BetProcessingService --> PermutationSetRepository
+BetProcessingService --> PermutationOrchestrator
+BetProcessingService --> PermGameService
+BetProcessingService --> ValidationService
+
+PermGameService --> PermGameRepository
+PermutationOrchestrator --> ValidationService
+
+@enduml
