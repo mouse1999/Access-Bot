@@ -1,5 +1,6 @@
 package com.mouse.bet.domain.entities;
 
+import com.mouse.bet.enums.SelectionStatus;
 import com.mouse.bet.exception.AlreadyStartedGameException;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,7 +10,7 @@ import java.util.*;
 
 @Entity
 @Table(name = "game_selections")
-@Getter
+@Data
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class GameSelection {
 
@@ -19,6 +20,9 @@ public class GameSelection {
 
     private LocalDateTime createdAt;
 
+    @Enumerated(EnumType.STRING)
+    private SelectionStatus selectionStatus = SelectionStatus.ACTIVE;
+
     @OneToMany(mappedBy = "selection",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
@@ -26,7 +30,6 @@ public class GameSelection {
 
     private GameSelection(List<Game> games) {
         this.createdAt = LocalDateTime.now();
-//        games.forEach(this::addGame);
 
         for(Game game : games) {
             try {

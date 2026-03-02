@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AccessBot — Control Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:         #f5f7fa;
+            --surface:    #ffffff;
+            --border:     #e2e8f0;
+            --border-2:   #cbd5e1;
+            --text:       #0f172a;
+            --muted:      #64748b;
+            --subtle:     #94a3b8;
+            --green:      #16a34a;
+            --green-bg:   #f0fdf4;
+            --green-bd:   #bbf7d0;
+            --red:        #dc2626;
+            --red-bg:     #fef2f2;
+            --red-bd:     #fecaca;
+            --amber:      #d97706;
+            --amber-bg:   #fffbeb;
+            --amber-bd:   #fde68a;
+            --blue:       #2563eb;
+            --blue-bg:    #eff6ff;
+            --blue-bd:    #bfdbfe;
+            --accent:     #2563eb;
+            --radius:     10px;
+            --shadow:     0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md:  0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Top nav ── */
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-brand {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+
+        .nav-brand span { color: var(--accent); }
+
+        .online-dot {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.78rem;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.4; }
+        }
+
+        /* ── Page layout ── */
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 36px 24px 60px;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .page-subtitle {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 32px;
+        }
+
+        /* ── Stat grid ── */
+        .grid-top {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.9rem;
+            font-weight: 600;
+            letter-spacing: -1px;
+            line-height: 1;
+            font-family: 'DM Mono', monospace;
+        }
+
+        .stat-value.green { color: var(--green); }
+        .stat-value.amber { color: var(--amber); }
+        .stat-value.blue  { color: var(--blue);  }
+
+        .stat-footer {
+            margin-top: 8px;
+            font-size: 0.75rem;
+            color: var(--subtle);
+        }
+
+        /* ── Card ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .endpoint-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--subtle);
+            background: var(--bg);
+            padding: 3px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        /* ── Scraper block ── */
+        .scraper-inner {
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .scraper-info { flex: 1; }
+
+        .scraper-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .scraper-info p {
+            font-size: 0.83rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 1px 2px rgba(37,99,235,0.25);
+        }
+
+        .btn-primary:hover    { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+        .btn-primary:active   { transform: translateY(0); }
+        .btn-primary:disabled { background: var(--border-2); color: var(--subtle); cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover { background: var(--bg); color: var(--text); }
+
+        .btn-sm { padding: 6px 14px; font-size: 0.8rem; border-radius: 6px; }
+
+        /* ── Spinner ── */
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.35);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .btn.loading .spinner { display: block; }
+
+        /* ── Alert ── */
+        .alert {
+            display: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.84rem;
+            line-height: 1.5;
+            border: 1px solid;
+            margin: 0 24px 20px;
+            animation: fadeUp 0.2s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(-4px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert.success { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); }
+        .alert.error   { background: var(--red-bg);   border-color: var(--red-bd);   color: var(--red);   }
+        .alert.warning { background: var(--amber-bg); border-color: var(--amber-bd); color: var(--amber); }
+
+        /* ── Table ── */
+        .table-wrap { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 10px 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.1s;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover      { background: #f8fafc; }
+
+        tbody td {
+            padding: 14px 20px;
+            vertical-align: middle;
+        }
+
+        .mono {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.78rem;
+        }
+
+        /* ── Badges ── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .badge-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .badge.completed  { background: var(--green-bg); color: var(--green); }
+        .badge.completed  .badge-dot { background: var(--green); }
+        .badge.pending    { background: var(--amber-bg); color: var(--amber); }
+        .badge.pending    .badge-dot { background: var(--amber); animation: pulse 1.5s infinite; }
+        .badge.processing { background: var(--blue-bg);  color: var(--blue);  }
+        .badge.processing .badge-dot { background: var(--blue); animation: pulse 1s infinite; }
+        .badge.failed     { background: var(--red-bg);   color: var(--red);   }
+        .badge.failed     .badge-dot { background: var(--red); }
+
+        /* ── Game chips ── */
+        .games-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .game-chip {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: 0.72rem;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--subtle);
+        }
+
+        .empty-state .empty-icon { font-size: 2rem; margin-bottom: 12px; }
+        .empty-state p { font-size: 0.88rem; }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .last-updated {
+            font-size: 0.75rem;
+            color: var(--subtle);
+            font-family: 'DM Mono', monospace;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .grid-top    { grid-template-columns: 1fr 1fr; }
+            .scraper-inner { flex-direction: column; align-items: flex-start; }
+            nav { padding: 0 16px; }
+            .page { padding: 24px 16px 48px; }
+        }
+
+        @media (max-width: 480px) {
+            .grid-top { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-brand">Access<span>Bot</span> <span style="color:var(--subtle);font-weight:400;font-size:0.85rem;">/ Control Panel</span></div>
+    <div class="online-dot">
+        <div class="dot"></div>
+        System Online
+    </div>
+</nav>
+
+<div class="page">
+
+    <div class="page-title">Dashboard</div>
+    <div class="page-subtitle">Monitor and control the AccessBot betting automation system.</div>
+
+    <!-- ── Stats ── -->
+    <div class="grid-top">
+        <div class="stat-card">
+            <div class="stat-label">Total PermSets</div>
+            <div class="stat-value blue" id="statTotal">—</div>
+            <div class="stat-footer">All time</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Completed</div>
+            <div class="stat-value green" id="statCompleted">—</div>
+            <div class="stat-footer">Successfully placed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Pending / Processing</div>
+            <div class="stat-value amber" id="statPending">—</div>
+            <div class="stat-footer">Currently active</div>
+        </div>
+    </div>
+
+    <!-- ── Scraper control ── -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Game Scraper</div>
+            <span class="endpoint-label">POST /api/scraper/scrape</span>
+        </div>
+        <div class="scraper-inner">
+            <div class="scraper-info">
+                <h3>Scrape Upcoming Games</h3>
+                <p>Fetches games starting 3+ hours from now and queues them for bet processing.
+                    Will be blocked if unfinished PermSets are still active.</p>
+            </div>
+            <button class="btn btn-primary" id="scrapeBtn" onclick="scrapeGames()">
+                <div class="spinner" id="spinner"></div>
+                <span id="btnText">Run Scraper</span>
+            </button>
+        </div>
+        <div class="alert" id="scrapeAlert"></div>
+    </div>
+
+    <!-- ── PermSets table ── -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">PermSets</div>
+            <div class="toolbar">
+                <span class="last-updated" id="lastUpdated">—</span>
+                <button class="btn btn-ghost btn-sm" onclick="loadPermSets()">↻ Refresh</button>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Status</th>
+                    <th>Games</th>
+                    <th>Bet Reference</th>
+                    <th>Retries</th>
+                    <th>Scheduled At</th>
+                    <th>Created</th>
+                </tr>
+                </thead>
+                <tbody id="permSetBody">
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-icon">📋</div>
+                            <p>Click Refresh to load PermSets.</p>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ── Scraper ──────────────────────────────────────────────────────────────
+
+    async function scrapeGames() {
+        const btn    = document.getElementById('scrapeBtn');
+        const text   = document.getElementById('btnText');
+        const alert  = document.getElementById('scrapeAlert');
+
+        btn.disabled = true;
+        btn.classList.add('loading');
+        text.textContent  = 'Running...';
+        alert.style.display = 'none';
+
+        try {
+            const res  = await fetch('/api/scraper/scrape', { method: 'POST' });
+            const body = await res.text();
+
+            if (res.ok) {
+                showAlert(alert, 'success', '✓ ' + body);
+                loadPermSets();
+            } else if (res.status === 400) {
+                showAlert(alert, 'warning', '⚠ ' + body);
+            } else {
+                showAlert(alert, 'error', '✕ Error ' + res.status + ': ' + body);
+            }
+
+        } catch (err) {
+            showAlert(alert, 'error', '✕ Network error: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.classList.remove('loading');
+            text.textContent = 'Run Scraper';
+        }
+    }
+
+    function showAlert(el, type, message) {
+        el.className     = 'alert ' + type;
+        el.textContent   = message;
+        el.style.display = 'block';
+    }
+
+    // ── PermSets ─────────────────────────────────────────────────────────────
+
+    async function loadPermSets() {
+        const tbody = document.getElementById('permSetBody');
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:32px;color:var(--subtle);font-size:0.84rem;">Loading...</td></tr>`;
+
+        try {
+            const res  = await fetch('/api/permsets');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+
+            updateStats(data);
+            renderTable(data);
+            document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">⚠️</div><p>Failed to load: ${err.message}</p></div></td></tr>`;
+        }
+    }
+
+    function updateStats(data) {
+        document.getElementById('statTotal').textContent     = data.length;
+        document.getElementById('statCompleted').textContent = data.filter(p => normalize(p.status) === 'completed').length;
+        document.getElementById('statPending').textContent   = data.filter(p => ['pending','processing'].includes(normalize(p.status))).length;
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('permSetBody');
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><p>No PermSets found.</p></div></td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.map(p => `
+            <tr>
+                <td class="mono" style="color:var(--subtle);">#${p.id}</td>
+                <td>${statusBadge(p.status)}</td>
+                <td>${renderGames(p.games)}</td>
+                <td class="mono">${p.betReference
+                    ? `<span style="color:var(--green);background:var(--green-bg);padding:2px 8px;border-radius:6px;border:1px solid var(--green-bd);">${p.betReference}</span>`
+                    : '<span style="color:var(--subtle);">—</span>'}</td>
+                <td class="mono" style="color:${p.retryCount > 0 ? 'var(--amber)' : 'var(--subtle)'};">${p.retryCount}</td>
+                <td class="mono" style="color:var(--muted);">${formatDate(p.scheduledAt)}</td>
+                <td class="mono" style="color:var(--muted);">${formatDate(p.createdAt)}</td>
+            </tr>
+        `).join('');
+    }
+
+    function normalize(s) { return (s || '').toLowerCase(); }
+
+    function statusBadge(status) {
+        const s   = normalize(status);
+        const map = { completed: 'Completed', pending: 'Pending', processing: 'Processing', failed: 'Failed' };
+        const cls = map[s] ? s : 'pending';
+        return `<span class="badge ${cls}"><span class="badge-dot"></span>${map[s] || status || 'Unknown'}</span>`;
+    }
+
+    function renderGames(games) {
+        if (!games || games.length === 0) return '<span style="color:var(--subtle);font-size:0.78rem;">—</span>';
+        return `<div class="games-list">${games.map(g =>
+            `<span class="game-chip" title="Code: ${g.matchCode} | ${g.market} → ${g.outcome}">
+                ${g.homeTeam} v ${g.awayTeam}
+                <span style="color:var(--subtle);margin-left:4px;">(${g.outcome})</span>
+            </span>`
+        ).join('')}</div>`;
+    }
+
+    function formatDate(d) {
+        if (!d) return '—';
+        try {
+            return new Date(d).toLocaleString('en-GB', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        } catch { return d; }
+    }
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    loadPermSets();
+    setInterval(loadPermSets, 30_000);
+</script>
+</body>
+</html>

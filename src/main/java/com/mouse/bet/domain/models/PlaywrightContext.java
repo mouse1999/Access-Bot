@@ -1,5 +1,10 @@
 package com.mouse.bet.domain.models;
 
+import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Playwright;
+import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -11,25 +16,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Getter
+@Data
 public class PlaywrightContext {
-//    private Playwright playwright;
-//    private Browser browser;
-//    private BrowserContext context;
-//    private Page page;
-//
-//    public void setPlaywright(Playwright playwright) {
-//        this.playwright = playwright;
-//    }
-//
-//    public void setBrowser(Browser browser) {
-//        this.browser = browser;
-//    }
-//
-//    public void setContext(BrowserContext context) {
-//        this.context = context;
-//    }
-//
-//    public void setPage(Page page) {
-//        this.page = page;
-//    }
+    private Playwright playwright;
+    private Browser browser;
+    private BrowserContext context;
+    private Page page;
+    private UserAgentProfile userAgentProfile;
+
 }

@@ -1,7 +1,7 @@
 package com.mouse.bet.domain.entities;
 
 
-import com.mouse.bet.enums.BetStatus;
+import com.mouse.bet.enums.PermutationSetStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,7 +10,7 @@ import java.util.*;
 
 @Entity
 @Table(name = "permutation_sets")
-@Getter
+@Data
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PermutationSet {
 
@@ -22,10 +22,20 @@ public class PermutationSet {
     @JoinColumn(name = "selection_id", nullable = false)
     private GameSelection selection;
 
+
+
     @Enumerated(EnumType.STRING)
-    private BetStatus status;
+    private PermutationSetStatus permStatus;
+
+    private LocalDateTime scheduledAt;
+
+    private int retryCount;
 
     private String betReference;
+
+    @Version
+    private Long version;
+
 
     private LocalDateTime createdAt;
 
@@ -34,9 +44,12 @@ public class PermutationSet {
             orphanRemoval = true)
     private List<PermGame> permGames = new ArrayList<>();
 
+    private LocalDateTime scheduledExecutionTime;
+
+
     private PermutationSet(GameSelection selection) {
         this.selection = selection;
-        this.status = BetStatus.PENDING;
+        this.permStatus = PermutationSetStatus.PENDING;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -48,27 +61,36 @@ public class PermutationSet {
         permGames.add(permGame);
     }
 
-    public void markProcessing() {
-        if (status != BetStatus.PENDING) {
-            throw new IllegalStateException("Only PENDING set can move to PROCESSING");
-        }
-        this.status = BetStatus.PROCESSING;
-    }
 
-    public void markCompleted(String ref) {
-        if (status != BetStatus.PROCESSING) {
-            throw new IllegalStateException("Must be PROCESSING to complete");
-        }
-        this.betReference = ref;
-        this.status = BetStatus.COMPLETED;
-    }
-
-    public void markFailed() {
-        this.status = BetStatus.FAILED;
-    }
 
     public List<PermGame> getPermGames() {
         return Collections.unmodifiableList(permGames);
     }
+
+    public boolean isReadyForExecution() {
+        return permStatus == PermutationSetStatus.SCHEDULED
+                && scheduledAt != null
+                && scheduledAt.isBefore(LocalDateTime.now());
+    }
+
+    public void markProcessing() {
+        this.permStatus = PermutationSetStatus.PROCESSING;
+    }
+
+    public void markCompleted(String betReference) {
+        this.permStatus = PermutationSetStatus.COMPLETED;
+        this.betReference = betReference;
+    }
+
+    public void markFailed() {
+        this.permStatus = PermutationSetStatus.FAILED;
+        this.retryCount++;
+    }
+
+    public void rescheduleAfterMinutes(int minutes) {
+        this.permStatus = PermutationSetStatus.SCHEDULED;
+        this.scheduledAt = LocalDateTime.now().plusMinutes(minutes);
+    }
+
 }
 

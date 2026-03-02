@@ -8,6 +8,7 @@ import com.mouse.bet.repository.GameRepository;
 import com.mouse.bet.repository.GameSelectionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,9 @@ public class SelectionService {
     private final GameRepository gameRepository;
     private final GameSelectionRepository selectionRepository;
 
+    @Value("${bet.expected.games.count:3}")
+    private int expectedGamesCount;
+
     /**
      * Event listener triggered after games are scraped.
      *
@@ -50,12 +54,12 @@ public class SelectionService {
                 .map(Game::getId)
                 .collect(Collectors.toList());
 
-        if (gameIds.size() < 5) {
+        if (gameIds.size() < expectedGamesCount) {
             log.warn("Not enough games to create selection.");
             return;
         }
 
-        GameSelection selection = createSelection(gameIds.subList(0, 5));
+        GameSelection selection = createSelection(gameIds.subList(0, expectedGamesCount));
 
         selectionRepository.save(selection);
 
@@ -99,7 +103,7 @@ public class SelectionService {
      */
     public void validateSelection(GameSelection selection) {
 
-        if (selection.getItems().size() != 5) {
+        if (selection.getItems().size() != expectedGamesCount) {
             throw new IllegalStateException("Selection must contain exactly 5 games.");
         }
 
@@ -109,7 +113,7 @@ public class SelectionService {
                 .distinct()
                 .count();
 
-        if (distinctGames != 5) {
+        if (distinctGames != expectedGamesCount) {
             throw new IllegalStateException("Duplicate games are not allowed.");
         }
 

@@ -21,16 +21,18 @@ public class Game {
     private String homeTeam;
     private String awayTeam;
     private LocalDateTime startTime;
+    private String matchCode;
 
     public boolean isStarted() {
         return LocalDateTime.now().isAfter(startTime);
     }
 
-    public static Game create(String homeTeam, String awayTeam, LocalDateTime startTime) {
+    public static Game create(String homeTeam, String awayTeam, LocalDateTime startTime, String matchCode) {
         return Game.builder()
                 .homeTeam(homeTeam)
                 .awayTeam(awayTeam)
                 .startTime(startTime)
+                .matchCode(matchCode)
                 .build();
     }
 
